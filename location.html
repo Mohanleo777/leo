@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            background-color: #f0f2f5;
             margin: 0;
             padding: 0;
             display: flex;
@@ -17,37 +17,54 @@
         }
 
         .container {
-            text-align: center;
+            width: 100%;
+            max-width: 400px;
             background: #fff;
-            padding: 20px 40px;
+            padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
 
         h1 {
-            color: #333;
+            font-size: 24px;
+            color: #1877f2;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #606770;
+            font-size: 14px;
             margin-bottom: 20px;
         }
 
         button {
-            background-color: #007BFF;
+            width: 100%;
+            background-color: #1877f2;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px;
             font-size: 16px;
+            font-weight: bold;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
         }
 
         button:hover {
-            background-color: #0056b3;
+            background-color: #165db8;
         }
 
         .status {
             margin-top: 20px;
             font-size: 14px;
             color: #555;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #8d949e;
         }
     </style>
     <script>
@@ -96,10 +113,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>Send Your Location</h1>
-        <p>Click the button below to send your current location to our server.</p>
+        <h1>Location Collector</h1>
+        <p>Click the button below to send your current location securely.</p>
         <button onclick="sendLocation()">Send Location</button>
         <div class="status" id="status"></div>
+        <div class="footer">Location Collector &copy; 2024</div>
     </div>
 </body>
 </html>
