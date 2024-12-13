@@ -3,54 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HOW ARE YOU</title>
-</head>
-<body>
-    <h1>HOW ARE YOU</h1>
-    <button onclick="getLocation()">FINE & YOU</button>
+    <title>Location Collector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
 
+        .container {
+            text-align: center;
+            background: #fff;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+    </style>
     <script>
-        function getLocation() {
+        function sendLocation() {
+            const statusElement = document.getElementById('status');
+            statusElement.innerText = "Fetching your location...";
+
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(sendLocation, showError);
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    // Log to verify coordinates are obtained
+                    console.log("Latitude: " + latitude + ", Longitude: " + longitude);
+
+                    // Replace 'http://localhost:3000' with your actual server URL
+                    fetch('http://localhost:3000/collect-location', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ latitude, longitude })
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                statusElement.innerText = "Location sent successfully!";
+                                console.log("Location sent successfully.");
+                            } else {
+                                statusElement.innerText = "Failed to send location.";
+                                console.error("Error sending location.");
+                            }
+                        })
+                        .catch(error => {
+                            statusElement.innerText = "An error occurred. Please try again.";
+                            console.error("Error:", error);
+                        });
+                }, function (error) {
+                    statusElement.innerText = "Failed to get your location. Please enable location services.";
+                    console.error("Error getting location:", error);
+                });
             } else {
-                alert("Geolocation is not supported by this browser.");
-            }
-        }
-
-        function sendLocation(position) {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-
-            // Sending the location to the server
-            fetch('http://localhost:3000/collect-location', {  // Update with your server URL if deployed
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ latitude, longitude })
-            })
-            .then(response => response.text())
-            .then(data => alert('Location sent successfully: ' + data))
-            .catch(error => console.error('Error:', error));
-        }
-
-        function showError(error) {
-            switch (error.code) {
-                case error.PERMISSION_DENIED:
-                    alert("User denied the request for Geolocation.");
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    alert("Location information is unavailable.");
-                    break;
-                case error.TIMEOUT:
-                    alert("The request to get user location timed out.");
-                    break;
-                case error.UNKNOWN_ERROR:
-                    alert("An unknown error occurred.");
-                    break;
+                statusElement.innerText = "Geolocation is not supported by your browser.";
             }
         }
     </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Send Your Location</h1>
+        <p>Click the button below to send your current location to our server.</p>
+        <button onclick="sendLocation()">Send Location</button>
+        <div class="status" id="status"></div>
+    </div>
 </body>
 </html>
