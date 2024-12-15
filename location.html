@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Location Collector</title>
+    <title>Location and Image Capture</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -32,12 +32,6 @@
             margin-bottom: 20px;
         }
 
-        p {
-            color: #606770;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
         button {
             width: 100%;
             background-color: #1877f2;
@@ -49,10 +43,17 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-top: 10px;
         }
 
         button:hover {
             background-color: #165db8;
+        }
+
+        video, canvas {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
         }
 
         .status {
@@ -60,64 +61,69 @@
             font-size: 14px;
             color: #555;
         }
-
-        .footer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #8d949e;
-        }
     </style>
     <script>
-        function sendLocation() {
-            const statusElement = document.getElementById('status');
-            statusElement.innerText = "Fetching your location...";
+        let videoElement, canvasElement, context;
 
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
+        function initCamera() {
+            videoElement = document.getElementById('video');
+            canvasElement = document.getElementById('canvas');
+            context = canvasElement.getContext('2d');
 
-                    // Log to verify coordinates are obtained
-                    console.log("Latitude: " + latitude + ", Longitude: " + longitude);
-
-                    // Replace 'http://localhost:3000' with your actual server URL
-                    fetch('http://localhost:3000/collect-location', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ latitude, longitude })
-                    })
-                        .then(response => {
-                            if (response.ok) {
-                                statusElement.innerText = "Location sent successfully!";
-                                console.log("Location sent successfully.");
-                            } else {
-                                statusElement.innerText = "Failed to send location.";
-                                console.error("Error sending location.");
-                            }
-                        })
-                        .catch(error => {
-                            statusElement.innerText = "An error occurred. Please try again.";
-                            console.error("Error:", error);
-                        });
-                }, function (error) {
-                    statusElement.innerText = "Failed to get your location. Please enable location services.";
-                    console.error("Error getting location:", error);
+            // Access the user's webcam
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    videoElement.srcObject = stream;
+                    videoElement.play();
+                })
+                .catch(err => {
+                    console.error("Error accessing the webcam:", err);
+                    alert("Could not access your camera. Please enable permissions.");
                 });
-            } else {
-                statusElement.innerText = "Geolocation is not supported by your browser.";
-            }
+        }
+
+        function captureImage() {
+            context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+            // Convert canvas to base64
+            const imageData = canvasElement.toDataURL('image/png');
+
+            // Send image to the server
+            fetch('http://localhost:3000/capture-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: imageData }),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Image sent successfully!");
+                    } else {
+                        alert("Failed to send the image.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error sending image:", error);
+                    alert("An error occurred while sending the image.");
+                });
         }
     </script>
 </head>
-<body>
+<body onload="initCamera()">
     <div class="container">
-        <h1>Location Collector</h1>
-        <p>Click the button below to send your current location securely.</p>
+        <h1>Capture Location & Image</h1>
+        <p>Click the buttons below to capture your current location and image.</p>
+
+        <!-- Video Stream -->
+        <video id="video" width="300" autoplay></video>
+        <canvas id="canvas" width="300" height="200" style="display:none;"></canvas>
+
+        <!-- Buttons -->
         <button onclick="sendLocation()">Send Location</button>
+        <button onclick="captureImage()">Capture Image</button>
+
         <div class="status" id="status"></div>
-        <div class="footer">Location Collector &copy; 2024</div>
     </div>
 </body>
 </html>
