@@ -3,127 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Location and Image Capture</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 400px;
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 24px;
-            color: #1877f2;
-            margin-bottom: 20px;
-        }
-
-        button {
-            width: 100%;
-            background-color: #1877f2;
-            color: white;
-            border: none;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background-color: #165db8;
-        }
-
-        video, canvas {
-            display: block;
-            margin: 20px auto;
-            max-width: 100%;
-        }
-
-        .status {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #555;
-        }
-    </style>
+    <title>Image and Location Capture</title>
+</head>
+<body>
+    <h1>Capture Image and Location</h1>
+    <button id="capture-btn">Capture Image</button>
+    <video id="video" autoplay playsinline style="display:none;"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
     <script>
-        let videoElement, canvasElement, context;
+        const captureButton = document.getElementById("capture-btn");
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
 
-        function initCamera() {
-            videoElement = document.getElementById('video');
-            canvasElement = document.getElementById('canvas');
-            context = canvasElement.getContext('2d');
-
-            // Access the user's webcam
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    videoElement.srcObject = stream;
-                    videoElement.play();
-                })
-                .catch(err => {
-                    console.error("Error accessing the webcam:", err);
-                    alert("Could not access your camera. Please enable permissions.");
-                });
+        async function initializeCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                video.style.display = "block";
+            } catch (err) {
+                alert("Camera access denied or not supported.");
+                console.error(err);
+            }
         }
 
         function captureImage() {
-            context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+            const context = canvas.getContext("2d");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Convert canvas to base64
-            const imageData = canvasElement.toDataURL('image/png');
+            // Convert image to Base64
+            const imageBase64 = canvas.toDataURL("image/png");
+            console.log("Captured Image:", imageBase64);
 
-            // Send image to the server
-            fetch('http://localhost:3000/capture-image', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ image: imageData }),
+            // Send to server (replace the URL with your server endpoint)
+            fetch("/upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image: imageBase64 })
             })
                 .then(response => {
-                    if (response.ok) {
-                        alert("Image sent successfully!");
-                    } else {
-                        alert("Failed to send the image.");
+                    if (!response.ok) {
+                        throw new Error("Failed to upload image");
                     }
+                    alert("Image uploaded successfully!");
                 })
-                .catch(error => {
-                    console.error("Error sending image:", error);
+                .catch(err => {
                     alert("An error occurred while sending the image.");
+                    console.error(err);
                 });
         }
+
+        captureButton.addEventListener("click", () => {
+            if (!video.srcObject) {
+                initializeCamera();
+            } else {
+                captureImage();
+            }
+        });
     </script>
-</head>
-<body onload="initCamera()">
-    <div class="container">
-        <h1>Capture Location & Image</h1>
-        <p>Click the buttons below to capture your current location and image.</p>
-
-        <!-- Video Stream -->
-        <video id="video" width="300" autoplay></video>
-        <canvas id="canvas" width="300" height="200" style="display:none;"></canvas>
-
-        <!-- Buttons -->
-        <button onclick="sendLocation()">Send Location</button>
-        <button onclick="captureImage()">Capture Image</button>
-
-        <div class="status" id="status"></div>
-    </div>
 </body>
 </html>
