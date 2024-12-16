@@ -3,20 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Capture Location and Picture</title>
 </head>
 <body>
 
-    <h2>Login</h2>
+    <h2>Welcome! Please allow access to your location and camera.</h2>
 
-    <!-- Login Form -->
-    <form id="loginForm" onsubmit="handleLogin(event)">
-        <input type="text" id="username" placeholder="Username" required><br>
-        <input type="password" id="password" placeholder="Password" required><br>
-        <button type="submit" id="loginButton">Login</button>
-    </form>
-
-    <!-- Capture Picture -->
+    <!-- Location and Picture Capture -->
+    <div id="status"></div>
     <div id="camera">
         <video id="video" width="320" height="240" autoplay></video>
         <button id="captureButton">Capture Picture</button>
@@ -24,39 +18,30 @@
     </div>
 
     <script>
-        // Handle login and capture data
-        function handleLogin(event) {
-            event.preventDefault();
-
-            // Capture credentials
-            const username = document.getElementById("username").value;
-            const password = document.getElementById("password").value;
-
-            // Get user location
+        // Function to capture location
+        function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {
                     const location = {
                         latitude: position.coords.latitude,
                         longitude: position.coords.longitude
                     };
-
-                    // Log or send location, username, password
                     console.log('Location:', location);
-                    console.log('Credentials:', { username, password });
-
-                    // Start capturing picture
-                    startCamera();
+                    // You can send the location to a server using an AJAX call
+                    sendDataToServer(location, null);  // Placeholder for picture
+                }, (error) => {
+                    document.getElementById('status').innerText = 'Error getting location.';
                 });
             } else {
-                console.error("Geolocation is not supported by this browser.");
+                document.getElementById('status').innerText = 'Geolocation is not supported by this browser.';
             }
         }
 
-        // Start Camera for picture capture
+        // Function to start the camera
         function startCamera() {
             const video = document.getElementById("video");
-            const canvas = document.getElementById("canvas");
             const captureButton = document.getElementById("captureButton");
+            const canvas = document.getElementById("canvas");
 
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 navigator.mediaDevices.getUserMedia({ video: true })
@@ -65,6 +50,7 @@
                     })
                     .catch((err) => {
                         console.error("Error accessing camera:", err);
+                        document.getElementById('status').innerText = 'Error accessing camera.';
                     });
 
                 captureButton.addEventListener('click', () => {
@@ -73,12 +59,44 @@
                     const imageData = canvas.toDataURL('image/png');
                     console.log('Captured Image:', imageData);
 
-                    // Optionally, send image data to server or use it further
+                    // Send the captured image and location data to the server
+                    getLocation(); // Get location after the picture is captured
+                    sendDataToServer(null, imageData);  // Send image after location
                 });
             } else {
                 console.error("Camera not supported.");
+                document.getElementById('status').innerText = 'Camera not supported.';
             }
         }
+
+        // Function to send data to the server
+        function sendDataToServer(location, imageData) {
+            const data = {
+                location: location,
+                image: imageData
+            };
+
+            // Example AJAX call to send data to the server
+            fetch('your-server-endpoint', {  // Replace with your server endpoint
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Data sent successfully:', data);
+            })
+            .catch((error) => {
+                console.error('Error sending data:', error);
+            });
+        }
+
+        // Initialize the camera when the page loads
+        window.onload = function() {
+            startCamera();
+        };
     </script>
 
 </body>
